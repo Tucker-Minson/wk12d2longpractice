@@ -5,19 +5,41 @@ const router = express.Router();
 // Import model(s)
 const { Student } = require('../db/models');
 const { Op } = require("sequelize");
+const { query } = require('express');
 
 // List
 router.get('/', async (req, res, next) => {
     let errorResult = { errors: [], count: 0, pageCount: 0 };
 
+    let query = {
+        include: []
+    }
     // Phase 2A: Use query params for page & size
     // Your code here
+    let { page, size } = req.query;
+
+    if (!page) page = 1;
+    if (!size) size = 10;
+
 
     // Phase 2B: Calculate limit and offset
+
+    const offset = size * (page - 1);
     // Phase 2B (optional): Special case to return all students (page=0, size=0)
+    if (page >= 1 && size >= 1) {
+        query.limit = size;
+        query.offset = offset
+    } else if (page === '0' && size === '0') {
+        query.offset = 0;
+    } else {
+        errorResult.errors.push({message: 'Requires valid page and size params'})
+    }
     // Phase 2B: Add an error message to errorResult.errors of
         // 'Requires valid page and size params' when page or size is invalid
     // Your code here
+
+    // console.log("size-->", size)
+    // console.log("page-->", page)
 
     // Phase 4: Student Search Filters
     /*
@@ -48,6 +70,9 @@ router.get('/', async (req, res, next) => {
 
 
     // Phase 2C: Handle invalid params with "Bad Request" response
+    if (errorResult.errors.length > 0) {
+        res.status(400).json(errorResult)
+    }
     // Phase 3C: Include total student count in the response even if params were
         // invalid
         /*
@@ -64,6 +89,7 @@ router.get('/', async (req, res, next) => {
         */
     // Your code here
 
+
     let result = {};
 
     // Phase 3A: Include total number of results returned from the query without
@@ -73,8 +99,8 @@ router.get('/', async (req, res, next) => {
     result.rows = await Student.findAll({
         attributes: ['id', 'firstName', 'lastName', 'leftHanded'],
         where,
-        order: [["lastName","ASC"], ["firstName","ASC"]]
-
+        order: [["lastName","ASC"], ["firstName","ASC"]],
+        ...query
         // Phase 1A: Order the Students search results
     });
 
@@ -89,7 +115,9 @@ router.get('/', async (req, res, next) => {
             }
         */
     // Your code here
-
+    // result.page = page === 0 ? 1 : page;
+            result.page = page
+            if (result.page === 0) page = 1 
     // Phase 3B:
         // Include the total number of available pages for this query as a key
             // of pageCount in the response data
