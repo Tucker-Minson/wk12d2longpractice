@@ -6,6 +6,7 @@ const router = express.Router();
 const { Student } = require('../db/models');
 const { Op } = require("sequelize");
 const { query } = require('express');
+const e = require('express');
 
 // List
 router.get('/', async (req, res, next) => {
@@ -30,13 +31,14 @@ router.get('/', async (req, res, next) => {
     if (page >= 1 && size >= 1) {
         query.limit = size;
         query.offset = offset
-    } else if (page === '0' && size === '0') {
-        query.offset = 0;
+    // } else if (page === '0' && size === '0') {
+    //     query.offset = 0;
     } else {
         errorResult.errors.push({
             message: 'Requires valid page and size params'
         })
     }
+    console.log(query)
     // Phase 2B: Add an error message to errorResult.errors of
         // 'Requires valid page and size params' when page or size is invalid
     // Your code here
@@ -71,18 +73,37 @@ router.get('/', async (req, res, next) => {
 
     // Your code here
 
-    const { firstName, lastName, leftHanded} = req.query;
+    const { firstName, lastName, lefty} = req.query;
 
     if (req.query.firstName) {
         where.firstName = {
             [Op.like]: `%${req.query.firstName}%`
         }
     }
-
     if (req.query.lastName) {
-        where.lastName = {
-            [Op.substring]: 
+        const lastNameExist = await Student.findAll({
+            where: {
+                lastName: {
+                    [Op.like]: `%${req.query.lastName}%`
+                }
+            }
+        })
+        if (lastNameExist.length !== 0 && lastNameExist !== undefined) {
+            where.lastName = {
+                [Op.like]: `%${req.query.lastName}%`
+            }
         }
+    }
+
+    if (req.query.lefty) {
+        if (req.query.lefty === 'true') {
+            where.leftHanded = true
+        } else if (req.query.lefty === 'false') {
+            where.leftHanded = false
+        } else {
+            errorResult.errors.push({message: "Lefty should be either true or false"})
+        }
+
     }
 
     // Phase 2C: Handle invalid params with "Bad Request" response
