@@ -22,6 +22,7 @@ router.get('/', async (req, res, next) => {
     if (!size) size = 10;
 
 
+    let counts = await Student.count()
     // Phase 2B: Calculate limit and offset
 
     const offset = size * (page - 1);
@@ -32,7 +33,9 @@ router.get('/', async (req, res, next) => {
     } else if (page === '0' && size === '0') {
         query.offset = 0;
     } else {
-        errorResult.errors.push({message: 'Requires valid page and size params'})
+        errorResult.errors.push({
+            message: 'Requires valid page and size params'
+        })
     }
     // Phase 2B: Add an error message to errorResult.errors of
         // 'Requires valid page and size params' when page or size is invalid
@@ -71,7 +74,8 @@ router.get('/', async (req, res, next) => {
 
     // Phase 2C: Handle invalid params with "Bad Request" response
     if (errorResult.errors.length > 0) {
-        res.status(400).json(errorResult)
+        errorResult.count = counts;
+        res.status(400).json(errorResult);
     }
     // Phase 3C: Include total student count in the response even if params were
         // invalid
@@ -96,6 +100,13 @@ router.get('/', async (req, res, next) => {
         // limits and offsets as a property of count on the result
         // Note: This should be a new query
 
+        //
+        result.count = counts
+
+        let total = parseInt(offset) //- parseInt(1)
+        let displayCount = `Showing ${total + 1} out of ${total + parseInt(size)} results`
+        result.displayCount = displayCount
+
     result.rows = await Student.findAll({
         attributes: ['id', 'firstName', 'lastName', 'leftHanded'],
         where,
@@ -117,7 +128,7 @@ router.get('/', async (req, res, next) => {
     // Your code here
     // result.page = page === 0 ? 1 : page;
             result.page = page
-            if (result.page === 0) page = 1 
+            if (result.page === 0) page = 1
     // Phase 3B:
         // Include the total number of available pages for this query as a key
             // of pageCount in the response data
@@ -133,6 +144,7 @@ router.get('/', async (req, res, next) => {
             }
         */
     // Your code here
+    result.pageCount = Math.ceil(counts / size)
 
     res.json(result);
 });
