@@ -73,6 +73,8 @@ router.get('/', async (req, res, next) => {
     result.rows = await Student.findAll({
         attributes: ['id', 'firstName', 'lastName', 'leftHanded'],
         where,
+        order: [["lastName","ASC"], ["firstName","ASC"]]
+
         // Phase 1A: Order the Students search results
     });
 
