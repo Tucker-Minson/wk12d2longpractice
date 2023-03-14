@@ -71,6 +71,19 @@ router.get('/', async (req, res, next) => {
 
     // Your code here
 
+    const { firstName, lastName, leftHanded} = req.query;
+
+    if (req.query.firstName) {
+        where.firstName = {
+            [Op.like]: `%${req.query.firstName}%`
+        }
+    }
+
+    if (req.query.lastName) {
+        where.lastName = {
+            [Op.substring]: 
+        }
+    }
 
     // Phase 2C: Handle invalid params with "Bad Request" response
     if (errorResult.errors.length > 0) {
